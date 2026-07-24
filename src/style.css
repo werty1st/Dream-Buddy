@@ -1,0 +1,264 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  min-height: 100vh;
+  background: #0b1120;
+  color: #e5e7eb;
+}
+
+main {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  width: min(420px, 92vw);
+  background: #111827;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.status {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+button:hover { background: #1d4ed8; }
+button.ghost { background: #374151; }
+button.ghost:hover { background: #4b5563; }
+
+#scan { display: block; margin: 0 auto; }
+
+.big {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: #0ea5e9;
+  margin-bottom: 1.25rem;
+}
+.big.on { background: #7c3aed; }
+
+.card {
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #0ea5e9;
+}
+
+.switch {
+  width: 42px;
+  height: 24px;
+  appearance: none;
+  background: #4b5563;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.switch:checked { background: #0ea5e9; }
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+.switch:checked::after { transform: translateX(18px); }
+
+.colors {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  justify-content: center;
+}
+.colors button {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  border: 3px solid transparent;
+}
+.colors button.sel { border-color: #e5e7eb; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+select {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: #374151;
+  color: #e5e7eb;
+  border: none;
+  font-size: 0.95rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.row select { margin-top: 0; }
+
+.state {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+/* Guide-Overlay (Onboarding, nur über "Anleitung") */
+#connect-view {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+/* display:flex würde das hidden-Attribut sonst überstimmen */
+#connect-view[hidden] { display: none; }
+#scan { display: inline-block; margin: 0; }
+
+#wizard {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+#wizard[hidden] { display: none; }
+
+.wiz-card {
+  background: #111827;
+  border-radius: 16px;
+  padding: 1.25rem;
+  width: min(360px, 92vw);
+  text-align: center;
+}
+
+.wiz-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+button.small { padding: 0.3rem 0.6rem; font-size: 0.9rem; }
+
+.wiz-art {
+  font-size: 4rem;
+  line-height: 1;
+  margin: 1rem 0;
+}
+
+.wiz-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.wiz-card p { margin: 0 0 0.75rem; color: #d1d5db; font-size: 0.95rem; }
+.wiz-hint { color: #9ca3af !important; font-size: 0.8rem !important; }
+
+.dots {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #4b5563;
+}
+.dot.on { background: #0ea5e9; }
+
+#wiz-next { width: 100%; }
+#wiz-next:disabled { background: #4b5563; cursor: default; }
+
+/* Native "?"-Hilfe via <details>, kein JS. */
+.help {
+  display: inline-block;
+  position: relative;
+  font-size: 0.8rem;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.help > summary {
+  list-style: none;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 50%;
+  background: #374151;
+  color: #e5e7eb;
+  user-select: none;
+}
+.help > summary::-webkit-details-marker { display: none; }
+.help[open] > summary { background: #0ea5e9; }
+.help-body {
+  position: absolute;
+  z-index: 10;
+  top: 26px;
+  right: 0;
+  width: 240px;
+  padding: 0.75rem;
+  background: #0b1120;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  text-align: left;
+  color: #d1d5db;
+  font-weight: 400;
+}
+.help-body p { margin: 0 0 0.5rem; }
+.help-body p:last-child { margin: 0; }
+h1 .help { margin-left: 0.35rem; }
+
+#log {
+  margin: 1rem 0 0;
+  max-height: 140px;
+  overflow: auto;
+  font-size: 0.72rem;
+  color: #6b7280;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
