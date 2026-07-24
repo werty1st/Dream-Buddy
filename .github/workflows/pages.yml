@@ -30,6 +30,8 @@ jobs:
       # ponytail: --base statt vite.config.ts, Repo-Name kommt aus dem Kontext
       - run: npm run build -- --base=/${{ github.event.repository.name }}/
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
