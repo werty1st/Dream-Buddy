@@ -43,6 +43,7 @@ app.innerHTML = `
     <section id="connect-view">
       <button id="scan">Gerät suchen</button>
       <button id="guide" class="ghost">Anleitung</button>
+      <button id="install" class="ghost" hidden>App installieren</button>
     </section>
 
     <div id="wizard" hidden>
@@ -463,3 +464,39 @@ for (const c of COLORS) {
   });
   colorsEl.appendChild(b);
 }
+
+// --- PWA -------------------------------------------------------------------
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+      .catch((e) => log(`SW-Registrierung fehlgeschlagen: ${e}`));
+  });
+}
+
+// Nicht in lib.dom, nur Chromium kennt das Event.
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+}
+
+// Chrome/Android: Installations-Button erst zeigen, wenn der Browser ihn anbietet.
+const installBtn = $<HTMLButtonElement>("#install");
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e as BeforeInstallPromptEvent;
+  installBtn.hidden = false;
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+  await deferredPrompt.prompt();
+  deferredPrompt = null;
+  installBtn.hidden = true;
+});
+
+window.addEventListener("appinstalled", () => {
+  installBtn.hidden = true;
+});

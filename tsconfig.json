@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["web-bluetooth"],
+    "types": ["web-bluetooth", "vite/client"],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "resolveJsonModule": true,

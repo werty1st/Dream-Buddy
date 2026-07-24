@@ -13,6 +13,16 @@ Web-App zur Steuerung des Mattel/Fisher-Price "Häschen"-Nachtlichts (MagicBulle
 - **Audio**: Lautstärke, Playlist, Wiedergabe stoppen
 - Geräte-Status abfragen (Global State, Batterie, Firmware)
 
+## Installieren (PWA)
+
+Die App ist eine Progressive Web App: In Chrome/Edge (Desktop) erscheint ein
+Installations-Symbol in der Adressleiste, auf Android "Zum Startbildschirm
+hinzufügen". Im Verbinden-Screen gibt es zusätzlich einen **App installieren**-Button,
+sobald der Browser die Installation anbietet.
+
+Ein Service Worker (`public/sw.js`) cached die App-Shell, die Oberfläche startet
+also auch offline. Bluetooth selbst braucht natürlich weiterhin das Gerät.
+
 ## Voraussetzungen
 
 Browser mit Web-Bluetooth-Support: Chrome, Edge oder Opera (Desktop/Android).
@@ -37,6 +47,7 @@ npm run preview  # Build lokal testen
 | `src/mpid/magicbullet.ts` | Transport-Layer: Framing, Checksumme, Reports |
 | `src/mpid/bunny.ts` | Kommandos des Häschens (Licht, Audio, Timer) |
 | `src/mpid/token.ts`, `crypto.ts` | Pairing-Token und Verschlüsselung |
+| `public/sw.js`, `manifest.webmanifest` | PWA: Offline-Cache und Installations-Metadaten |
 
 Das Protokoll ist aus der Original-Android-App (`com.mcpp.mattel.blekit`) portiert.
 
