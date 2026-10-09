@@ -11,7 +11,10 @@ Web-App zur Steuerung des Mattel/Fisher-Price "Häschen"-Nachtlichts (MagicBulle
 - **Dauer**: Licht und Sound nach 5–20 min automatisch abschalten
 - **Licht**: Helligkeit und Farbe (Warm, Rot, Gelb, Orange) getrennt einstellbar
 - **Audio**: Lautstärke, Playlist, Wiedergabe stoppen
+- **Aufwachlicht** (Schlaftrainer): Schlafens- und Aufstehzeit setzen; Bauch drücken leuchtet rot (liegen bleiben) bzw. grün (darf aufstehen). Läuft autonom im Häschen. Geräteuhr wird beim Verbinden gesetzt und zur Kontrolle zurückgelesen.
+- **Weckruf**: Licht und Lautstärke nach 45–90 min sanft hochfahren (Tab muss offen bleiben)
 - Geräte-Status abfragen (Global State, Batterie, Firmware)
+- **Mehrsprachig**: Deutsch, Englisch, Spanisch, Französisch, Italienisch — Browsersprache wird voreingestellt, Auswahl oben rechts
 
 ## Installieren (PWA)
 
@@ -42,10 +45,11 @@ npm run preview  # Build lokal testen
 | Datei | Zweck |
 | --- | --- |
 | `src/main.ts` | UI und Bedienlogik |
+| `src/i18n.ts` | Übersetzungen und Spracherkennung |
 | `src/mpid/session.ts` | Scan, GATT-Verbindung, Session-Handling |
 | `src/mpid/config.ts` | GATT-UUIDs und MTU pro Hardware-Typ |
 | `src/mpid/magicbullet.ts` | Transport-Layer: Framing, Checksumme, Reports |
-| `src/mpid/bunny.ts` | Kommandos des Häschens (Licht, Audio, Timer) |
+| `src/mpid/bunny.ts` | Kommandos des Häschens (Licht, Audio, Timer, Aufwachlicht, Uhr) |
 | `src/mpid/token.ts`, `crypto.ts` | Pairing-Token und Verschlüsselung |
 | `public/sw.js`, `manifest.webmanifest` | PWA: Offline-Cache und Installations-Metadaten |
 
@@ -58,6 +62,10 @@ Push auf `main` baut und veröffentlicht automatisch auf GitHub Pages
 **Pages → Source** "GitHub Actions" auswählen.
 
 Live: https://werty1st.github.io/Dream-Buddy/
+
+## Changelog
+
+Siehe [CHANGELOG.md](CHANGELOG.md).
 
 ## Lizenz
 

@@ -262,3 +262,14 @@ h1 .help { margin-left: 0.35rem; }
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+header { position: relative; }
+#lang {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: auto;
+  margin: 0;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+}

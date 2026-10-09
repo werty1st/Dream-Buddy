@@ -95,7 +95,23 @@ export const setCurrentDate = (hour: number, minute: number, second: number, wee
 export const setCurrentDateFrom = (d: Date) =>
   setCurrentDate(d.getHours(), d.getMinutes(), d.getSeconds(), d.getDay() + 1);
 
+// ---------- Ready-to-Rise (setR2RTimes/setSleepyTimes/setR2RStatus) ----------
+// Payload: 7 Tage So..Sa je [bcd(h), bcd(m)]; 0xFF = Tag unverändert.
+// ponytail: gleiche Zeit an allen Tagen, Wochenplan wenn jemand fragt.
+type Hm = { hour: number; minute: number };
+const week = (t: Hm) => Array.from({ length: 7 }, () => [bcd(t.hour), bcd(t.minute)]).flat();
+
+export const setSleepyTimes = (t: Hm) => cmd(Command.SET_SLEEPY_TIMES, ...week(t));
+export const setR2RTimes = (t: Hm) => cmd(Command.SET_R2R_TIMES, ...week(t));
+export const setR2RStatus = (on: boolean) => cmd(Command.SET_R2R_STATUS, on ? 1 : 0);
+
 export const requestGlobalState = () => cmd(Command.REQUEST_GLOBAL_STATE);
+export const requestCurrentDate = () => cmd(Command.REQUEST_CURRENT_DATE);
+
+const unbcd = (b: number) => (b >> 4) * 10 + (b & 0x0f);
+/** CURRENT_DATE (Response 19): [h, m, s, Wochentag 1=So] BCD. */
+export const decodeCurrentDate = (d: Uint8Array) =>
+  ({ hour: unbcd(d[0]), minute: unbcd(d[1]), second: unbcd(d[2]), weekday: unbcd(d[3]) });
 export const requestBatteryStatus = () => cmd(Command.REQUEST_BATTERY_STATUS);
 export const requestNapStatus = () => cmd(Command.REQUEST_CURRENT_NAP_TIME_STATUS);
 

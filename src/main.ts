@@ -12,45 +12,54 @@ import {
   playAudio,
   setPlaylistDuration,
   setCurrentDateFrom,
+  setSleepyTimes,
+  setR2RTimes,
+  setR2RStatus,
   requestGlobalState,
+  requestCurrentDate,
+  decodeCurrentDate,
   decodeGlobalState,
   type GlobalState,
 } from "./mpid/bunny";
+import { t, lang, setLang, LANGS, type Key, type Lang } from "./i18n";
 import "./style.css";
 
 // Lichtfarben (LEDColor) mit Anzeige-Swatch wie im "Beruhiger anpassen"-Screen.
 const COLORS = [
-  { id: 0, label: "Warm", css: "conic-gradient(#f87171,#fbbf24,#f97316,#f87171)" },
-  { id: 1, label: "Rot", css: "#ef4444" },
-  { id: 2, label: "Gelb", css: "#fde047" },
-  { id: 3, label: "Orange", css: "#f97316" },
+  { id: 0, css: "conic-gradient(#f87171,#fbbf24,#f97316,#f87171)" },
+  { id: 1, css: "#ef4444" },
+  { id: 2, css: "#fde047" },
+  { id: 3, css: "#f97316" },
 ];
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <main>
     <header>
+      <select id="lang" aria-label="Language">
+        ${Object.entries(LANGS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}
+      </select>
       <h1>Dream Buddy <details class="help"><summary>?</summary>
         <div class="help-body">
-          <p><b>Entspannung</b> — Musik + Licht an, läuft bis du stoppst.</p>
-          <p><b>Dauer</b> — schaltet Licht + Sound nach der eingestellten Zeit automatisch ab (5–20 min).</p>
-          <p><b>Licht</b> — Helligkeit und Farbe getrennt einstellbar.</p>
+          <p data-i18n="help.soothe"></p>
+          <p data-i18n="help.duration"></p>
+          <p data-i18n="help.light"></p>
         </div>
       </details></h1>
-      <p class="status" id="status">nicht verbunden</p>
+      <p class="status" id="status"></p>
     </header>
 
     <section id="connect-view">
-      <button id="scan">Gerät suchen</button>
-      <button id="guide" class="ghost">Anleitung</button>
-      <button id="install" class="ghost" hidden>App installieren</button>
+      <button id="scan" data-i18n="btn.scan"></button>
+      <button id="guide" class="ghost" data-i18n="btn.guide"></button>
+      <button id="install" class="ghost" hidden data-i18n="btn.install"></button>
     </section>
 
     <div id="wizard" hidden>
       <div class="wiz-card">
         <div class="wiz-head">
           <button id="wiz-back" class="ghost small">←</button>
-          <span id="wiz-title">Koppeln</span>
+          <span id="wiz-title"></span>
           <button id="wiz-close" class="ghost small">✕</button>
         </div>
         <div class="wiz-art" id="wiz-art"></div>
@@ -58,16 +67,16 @@ app.innerHTML = `
         <p id="wiz-text"></p>
         <p class="wiz-hint" id="wiz-hint"></p>
         <div class="dots" id="wiz-dots"></div>
-        <button id="wiz-next">Weiter</button>
+        <button id="wiz-next"></button>
       </div>
     </div>
 
     <section id="panel" hidden>
-      <button id="soothe" class="big">Entspannung starten</button>
+      <button id="soothe" class="big"></button>
 
       <div class="card" id="light-card">
         <div class="card-head">
-          <span>☀️ Licht</span>
+          <span data-i18n="light"></span>
           <input type="checkbox" id="light-toggle" class="switch" />
         </div>
         <input type="range" id="brightness" min="0" max="9" value="5" />
@@ -76,47 +85,63 @@ app.innerHTML = `
 
       <div class="card" id="music-card">
         <div class="card-head">
-          <span>🎵 Musik und Sound</span>
+          <span data-i18n="music"></span>
           <input type="checkbox" id="music-toggle" class="switch" />
         </div>
         <input type="range" id="volume" min="0" max="9" value="5" />
         <select id="audio">
-          <option value="0">Standard-Playlist</option>
-          <option value="2">Naturgeräusche</option>
-          <option value="3">Meeresrauschen</option>
-          <option value="4">Weißes Rauschen</option>
+          <option value="0" data-i18n="audio.default"></option>
+          <option value="2" data-i18n="audio.nature"></option>
+          <option value="3" data-i18n="audio.ocean"></option>
+          <option value="4" data-i18n="audio.noise"></option>
         </select>
-        <label class="row">Dauer
+        <label class="row"><span data-i18n="duration"></span>
           <select id="duration">
-            <option value="0">5 Min</option>
-            <option value="1">10 Min</option>
-            <option value="2">15 Min</option>
-            <option value="3">20 Min</option>
+            <option value="0">5 min</option>
+            <option value="1">10 min</option>
+            <option value="2">15 min</option>
+            <option value="3">20 min</option>
           </select>
           <details class="help"><summary>?</summary>
-            <div class="help-body">Schaltet Licht + Sound nach der eingestellten Zeit automatisch ab.</div>
+            <div class="help-body" data-i18n="duration.help"></div>
           </details>
         </label>
       </div>
 
       <div class="card" id="wake-card">
-        <div class="card-head"><span>⏰ Weckruf</span>
+        <div class="card-head"><span data-i18n="wake.title"></span>
           <details class="help"><summary>?</summary>
-            <div class="help-body">Nach der eingestellten Zeit fahren Licht und Lautstärke langsam von 0 auf 9 hoch (10 Stufen über ca. 5 Minuten). <b>Der Tab muss offen und verbunden bleiben</b> — das Häschen kann das nicht selbst.</div>
+            <div class="help-body" data-i18n="wake.help"></div>
           </details>
         </div>
-        <label class="row">In
+        <label class="row"><span data-i18n="wake.in"></span>
           <select id="wake-delay">
-            <option value="45">45 Min</option>
-            <option value="60" selected>60 Min</option>
-            <option value="90">90 Min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>60 min</option>
+            <option value="90">90 min</option>
           </select>
         </label>
         <div class="row">
-          <button id="wake-start">Weckruf stellen</button>
-          <button id="wake-cancel" class="ghost">Abbrechen</button>
+          <button id="wake-start" data-i18n="wake.start"></button>
+          <button id="wake-cancel" class="ghost" data-i18n="wake.cancel"></button>
         </div>
         <p class="state" id="wake-state"></p>
+      </div>
+
+      <div class="card" id="r2r-card">
+        <div class="card-head"><span data-i18n="r2r.title"></span>
+          <details class="help"><summary>?</summary>
+            <div class="help-body" data-i18n="r2r.help"></div>
+          </details>
+        </div>
+        <label class="row"><span data-i18n="r2r.sleep"></span> <input type="time" id="r2r-sleep" value="19:30" /></label>
+        <label class="row"><span data-i18n="r2r.wake"></span> <input type="time" id="r2r-wake" value="07:00" /></label>
+        <div class="row">
+          <button id="r2r-on" data-i18n="r2r.on"></button>
+          <button id="r2r-off" class="ghost" data-i18n="r2r.off"></button>
+          <button id="clock-check" class="ghost" data-i18n="clock.check"></button>
+        </div>
+        <p class="state" id="clock-state"></p>
       </div>
 
       <p class="state" id="state"></p>
@@ -135,6 +160,13 @@ const panel = $<HTMLElement>("#panel");
 const syncDebug = () => (logEl.hidden = !location.hash.includes("debug"));
 syncDebug();
 addEventListener("hashchange", syncDebug);
+
+// Dynamische Texte merken, damit ein Sprachwechsel sie neu rendert.
+const dyn = new Map<HTMLElement, () => string>();
+const show = (el: HTMLElement, fn: () => string) => {
+  dyn.set(el, fn);
+  el.textContent = fn();
+};
 
 const log = (m: string) => (logEl.textContent = m + "\n" + logEl.textContent);
 
@@ -157,8 +189,6 @@ async function send(payload: Uint8Array, label: string, refresh = false) {
 
 // ---------- GLOBAL_STATE -> UI spiegeln ----------
 
-const MODE = ["Beruhiger", "Try-Me", "Wach", "Schlafenszeit", "Pairing", "Firmware", "Nap"];
-
 function applyState(s: GlobalState) {
   last = s;
   $<HTMLInputElement>("#light-toggle").checked = s.ledOn;
@@ -168,10 +198,13 @@ function applyState(s: GlobalState) {
   $<HTMLSelectElement>("#duration").value = String(s.playlistDuration);
   markColor(s.ledColor);
   const active = s.ledOn || s.musicOn;
-  $<HTMLButtonElement>("#soothe").textContent = active ? "Entspannung stoppen" : "Entspannung starten";
+  show($<HTMLButtonElement>("#soothe"), () => t(active ? "soothe.stop" : "soothe.start"));
   $<HTMLButtonElement>("#soothe").classList.toggle("on", active);
-  stateEl.textContent =
-    `Modus: ${MODE[s.operationMode] ?? s.operationMode} · Batterie: ${s.batteryStatus ? "schwach" : "ok"}`;
+  show(stateEl, () => t("state", {
+    mode: s.operationMode <= 6 ? t(`mode.${s.operationMode}` as Key) : s.operationMode,
+    battery: t(s.batteryStatus ? "battery.low" : "battery.ok"),
+    r2r: t(s.r2rOn ? "on" : "off"),
+  }));
 }
 
 function markColor(id: number) {
@@ -186,17 +219,17 @@ function markColor(id: number) {
 async function connectFlow(): Promise<boolean> {
   try {
     const device = await scan();
-    statusEl.textContent = `${device.name ?? device.id} — verbinde…`;
+    show(statusEl, () => t("status.connecting", { name: device.name ?? device.id }));
     peripheral = new MpidPeripheral(device, {
       onLog: log,
-      onDiscovered: (name, match) => (statusEl.textContent = `${name} — ${match?.label ?? "?"}`),
+      onDiscovered: (name, match) => show(statusEl, () => `${name} — ${match?.label ?? "?"}`),
       onDecrypted: onData,
       onSessionReady: onPaired,
     });
     await peripheral.connect();
     return true;
   } catch (err) {
-    statusEl.textContent = "Verbindung fehlgeschlagen";
+    show(statusEl, () => t("status.failed"));
     log("scan: " + (err as Error).message);
     return false;
   }
@@ -212,7 +245,7 @@ let deviceReadyDone = false;
 async function onPaired() {
   ready = true;
   deviceReadyDone = false;
-  statusEl.textContent = "verbunden ●";
+  show(statusEl, () => t("status.connected"));
   $<HTMLElement>("#connect-view").hidden = true;
   panel.hidden = false;
   await send(enableReadTransmission(), "read transmission an");
@@ -227,6 +260,7 @@ async function onDeviceReady(via: string) {
   await send(cmd(Command.SEND_PAIRING_COMPLETE), "pairing complete");
   await send(setCurrentDateFrom(new Date()), "Uhrzeit gesetzt");
   await send(requestGlobalState(), "Status abgefragt");
+  await send(requestCurrentDate(), "Uhrzeit abgefragt");
 }
 
 // RX: MagicBullet dekodieren, GLOBAL_STATE (Response 2) in die UI spiegeln.
@@ -238,6 +272,7 @@ function onData(plain: Uint8Array) {
     if (r.app && r.app.length >= 9 && r.app[0] === 2) {
       applyState(decodeGlobalState(r.app.slice(1)));
     }
+    if (r.app && r.app.length >= 5 && r.app[0] === 19) showClock(decodeCurrentDate(r.app.slice(1)));
   } else if (r.service === "GENERAL") {
     log(`  RX GENERAL ${r.reportName}: ${hex(r.data)}${r.cmdReceived ? ` (vsid=${r.cmdReceived.vsid} len=${r.cmdReceived.recvLen} st=${r.cmdReceived.status})` : ""}`);
     // enable_rx (SSI0, 3 byte) bestätigt -> Gerät ist bereit.
@@ -294,13 +329,13 @@ let wakeLock: WakeLockSentinel | undefined;
 
 const wakeState = $<HTMLParagraphElement>("#wake-state");
 
-function cancelWake(msg = "") {
+function cancelWake(msg?: Key) {
   clearInterval(wakeTick);
   clearInterval(wakeRamp);
   wakeAt = wakeTick = wakeRamp = undefined;
   wakeLock?.release().catch(() => {});
   wakeLock = undefined;
-  wakeState.textContent = msg;
+  show(wakeState, () => (msg ? t(msg) : ""));
 }
 
 function tickWake() {
@@ -308,7 +343,7 @@ function tickWake() {
   const left = Math.max(0, wakeAt - Date.now());
   const min = Math.floor(left / 60000);
   const sec = Math.floor((left % 60000) / 1000);
-  wakeState.textContent = `Weckruf in ${min}:${String(sec).padStart(2, "0")}`;
+  show(wakeState, () => t("wake.countdown", { t: `${min}:${String(sec).padStart(2, "0")}` }));
   if (left <= 0) {
     clearInterval(wakeTick);
     wakeAt = undefined;
@@ -326,10 +361,11 @@ async function runRamp() {
 
   wakeRamp = setInterval(async () => {
     level++;
-    wakeState.textContent = `Weckruf läuft — Stufe ${level}/${RAMP_STEPS - 1}`;
+    const n = level;
+    show(wakeState, () => t("wake.running", { n, max: RAMP_STEPS - 1 }));
     await send(setLedBrightness(level), `Helligkeit ${level}`);
     await send(setVolume(level), `Lautstärke ${level}`);
-    if (level >= RAMP_STEPS - 1) cancelWake("Weckruf fertig");
+    if (level >= RAMP_STEPS - 1) cancelWake("wake.done");
   }, RAMP_STEP_MS);
 }
 
@@ -347,7 +383,7 @@ $<HTMLButtonElement>("#wake-start").addEventListener("click", async () => {
   }
 });
 
-$<HTMLButtonElement>("#wake-cancel").addEventListener("click", () => cancelWake("abgebrochen"));
+$<HTMLButtonElement>("#wake-cancel").addEventListener("click", () => cancelWake("wake.cancelled"));
 
 // Der Browser gibt den Wake Lock beim Tab-Wechsel frei — zurückholen.
 document.addEventListener("visibilitychange", async () => {
@@ -360,52 +396,57 @@ document.addEventListener("visibilitychange", async () => {
   }
 });
 
+// ---------- Aufwachlicht (Ready to Rise) ----------
+// Reihenfolge wie Original-App (AddEditR2RFrgmtPresenterImpl): Sleepy, R2R, Status.
+
+const hm = (id: string) => {
+  const [hour, minute] = $<HTMLInputElement>(id).value.split(":").map(Number);
+  return { hour, minute };
+};
+
+$<HTMLButtonElement>("#r2r-on").addEventListener("click", async () => {
+  await send(setCurrentDateFrom(new Date()), "Uhrzeit gesetzt");
+  await send(setSleepyTimes(hm("#r2r-sleep")), "Schlafzeit");
+  await send(setR2RTimes(hm("#r2r-wake")), "Aufstehzeit");
+  await send(setR2RStatus(true), "Aufwachlicht an", true);
+});
+// Geräteuhr vs. Browseruhr. Abweichung ±1 s ist BLE-Latenz/Sekundengrenze.
+function showClock(c: ReturnType<typeof decodeCurrentDate>) {
+  const now = new Date();
+  const dev = c.hour * 3600 + c.minute * 60 + c.second;
+  const loc = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  let diff = dev - loc;
+  if (diff > 43200) diff -= 86400; // Mitternacht
+  if (diff < -43200) diff += 86400;
+  const badDay = c.weekday !== now.getDay() + 1;
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const time = `${p2(c.hour)}:${p2(c.minute)}:${p2(c.second)}`;
+  show($<HTMLParagraphElement>("#clock-state"), () =>
+    t("clock.state", { time, diff: (diff >= 0 ? "+" : "") + diff }) + (badDay ? t("clock.badDay") : ""));
+}
+
+$<HTMLButtonElement>("#clock-check").addEventListener("click", () =>
+  send(requestCurrentDate(), "Uhrzeit abgefragt"));
+
+$<HTMLButtonElement>("#r2r-off").addEventListener("click", () =>
+  send(setR2RStatus(false), "Aufwachlicht aus", true));
+
 // ---------- Guide / Onboarding (optional, hinter "Anleitung") ----------
 // Nachgebaut aus screens/screen_pair_1..3.jpg. Kein Standardweg — der direkte
 // "Gerät suchen"-Button bleibt unverändert.
 
+// Texte in i18n.ts unter wiz.<index>.*
 interface WizStep {
-  title: string;
   art: string;
-  step: string;
-  text: string;
-  hint?: string;
-  next: string;
+  hint?: boolean;
   action?: () => Promise<boolean>;
 }
 
 const WIZ: WizStep[] = [
-  {
-    title: "Ein Produkt hinzufügen",
-    art: "🐰",
-    step: "Traumhäschen Schlafbegleiter",
-    text: "Wählen Sie Ihr Smart Connect Produkt aus. Diese App unterstützt aktuell nur das Traumhäschen (GMN58).",
-    next: "Auswählen",
-  },
-  {
-    title: "Koppeln",
-    art: "🔌",
-    step: "Schritt 1",
-    text: "Öffnen Sie den Rücken des Häschens und schieben Sie den Netz-/Lautstärkeschalter auf AN.",
-    hint: "Hinweis: Achten Sie darauf, dass Ihr Gerät beim Koppeln nicht weiter als zwei Meter vom Häschen entfernt ist.",
-    next: "Weiter",
-  },
-  {
-    title: "Koppeln",
-    art: "🎵",
-    step: "Schritt 2",
-    text: "Das Häschen spielt eine Melodie — es ist im Kopplungsmodus. Tippen Sie auf Koppeln und wählen Sie es im Browser-Dialog aus.",
-    hint: "Die Melodie stoppt und die LED leuchtet kurz grün, sobald die Kopplung abgeschlossen ist.",
-    next: "Koppeln",
-    action: connectFlow,
-  },
-  {
-    title: "Verbunden",
-    art: "✅",
-    step: "Erfolg!",
-    text: "Traumhäschen Schlafbegleiter erfolgreich verbunden.",
-    next: "Fertig",
-  },
+  { art: "🐰" },
+  { art: "🔌", hint: true },
+  { art: "🎵", hint: true, action: connectFlow },
+  { art: "✅" },
 ];
 
 const wizard = $<HTMLDivElement>("#wizard");
@@ -413,12 +454,13 @@ let wizIdx = 0;
 
 function renderWiz() {
   const s = WIZ[wizIdx];
-  $<HTMLSpanElement>("#wiz-title").textContent = s.title;
+  const w = (k: string) => t(`wiz.${wizIdx}.${k}` as Key);
+  $<HTMLSpanElement>("#wiz-title").textContent = w("title");
   $<HTMLDivElement>("#wiz-art").textContent = s.art;
-  $<HTMLHeadingElement>("#wiz-step").textContent = s.step;
-  $<HTMLParagraphElement>("#wiz-text").textContent = s.text;
-  $<HTMLParagraphElement>("#wiz-hint").textContent = s.hint ?? "";
-  $<HTMLButtonElement>("#wiz-next").textContent = s.next;
+  $<HTMLHeadingElement>("#wiz-step").textContent = w("step");
+  $<HTMLParagraphElement>("#wiz-text").textContent = w("text");
+  $<HTMLParagraphElement>("#wiz-hint").textContent = s.hint ? w("hint") : "";
+  $<HTMLButtonElement>("#wiz-next").textContent = w("next");
   $<HTMLButtonElement>("#wiz-back").hidden = wizIdx === 0;
   $<HTMLDivElement>("#wiz-dots").innerHTML = WIZ.map(
     (_, i) => `<span class="dot${i === wizIdx ? " on" : ""}"></span>`,
@@ -456,14 +498,33 @@ const colorsEl = $<HTMLDivElement>("#colors");
 for (const c of COLORS) {
   const b = document.createElement("button");
   b.dataset.color = String(c.id);
-  b.title = c.label;
   b.style.background = c.css;
   b.addEventListener("click", () => {
     markColor(c.id);
-    send(setLightColor(c.id), `Farbe ${c.label}`);
+    send(setLightColor(c.id), `Farbe ${c.id}`);
   });
   colorsEl.appendChild(b);
 }
+
+// ---------- Sprache ----------
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => (el.innerHTML = t(el.dataset.i18n as Key)));
+  document.querySelectorAll<HTMLButtonElement>("#colors button").forEach((b) => (b.title = t(`color.${b.dataset.color}` as Key)));
+  dyn.forEach((fn, el) => (el.textContent = fn()));
+  if (!wizard.hidden) renderWiz();
+}
+
+const langSel = $<HTMLSelectElement>("#lang");
+langSel.value = lang;
+langSel.addEventListener("change", () => {
+  setLang(langSel.value as Lang);
+  applyLang();
+});
+show(statusEl, () => t("status.disconnected"));
+show($<HTMLButtonElement>("#soothe"), () => t("soothe.start"));
+applyLang();
 
 // --- PWA -------------------------------------------------------------------
 
